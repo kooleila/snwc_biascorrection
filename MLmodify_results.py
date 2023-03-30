@@ -21,25 +21,25 @@ def encode(data, col, max_val):
 
 
 # modify the pd frame used in ML training & realtime production
-def modify(data,param):
+def modify_res(data,param):
         #data['validdate'] = pd.to_datetime(data['validdate'])
         #data = data.assign(diff_elev=data.model_elevation-data.elevation)
         if param == 'T2m':
-                remove = ['index','model_elevation','lat','lon','RH_PT1M_AVG','WS_PT10M_AVG',
-                'WG_PT1H_MAX','fcdate','D10M','GMAX','fmisid','obs_elevation','RHero','WSero','WGero','RH0bias',
+                remove = ['index','model_elevation','RH_PT1M_AVG','WS_PT10M_AVG',
+                'WG_PT1H_MAX','fcdate','D10M','GMAX','obs_elevation','RHero','WSero','WGero','RH0bias',
                 'WS0bias','WG0bias','RH1bias','WS1bias','WG1bias'] #,'T_weight']
                 #'oldB_RH','oldB_WS','T_weight','WS_weight','RH_weight']
         elif param == 'RH':
-                remove = ['index','model_elevation','lat','lon','TA_PT1M_AVG','WS_PT10M_AVG',
-                'WG_PT1H_MAX','fcdate','D10M','GMAX','fmisid','obs_elevation','Tero','WSero','WGero','T0bias',
+                remove = ['index','model_elevation','TA_PT1M_AVG','WS_PT10M_AVG',
+                'WG_PT1H_MAX','fcdate','D10M','GMAX','obs_elevation','Tero','WSero','WGero','T0bias',
                 'WS0bias','WG0bias','T1bias','WS1bias','WG1bias'] #,'RH_weight']
         elif param == 'WS':
-                remove = ['index','model_elevation','lat','lon','RH_PT1M_AVG','TA_PT1M_AVG',
-                'WG_PT1H_MAX','fcdate','RH2M','Q2M','fmisid','obs_elevation','RHero','Tero','WGero','RH0bias',
+                remove = ['index','model_elevation','RH_PT1M_AVG','TA_PT1M_AVG',
+                'WG_PT1H_MAX','fcdate','RH2M','Q2M','obs_elevation','RHero','Tero','WGero','RH0bias',
                 'T0bias','WG0bias','RH1bias','T1bias','WG1bias'] #,'WS_weight']
         elif param == 'WG':
-                remove = ['index','model_elevation','lat','lon','RH_PT1M_AVG','WS_PT10M_AVG',
-                'TA_PT1M_AVG','fcdate','Q2M','CCLOW','fmisid','obs_elevation','RHero','WSero','Tero','RH0bias',
+                remove = ['index','model_elevation','RH_PT1M_AVG','WS_PT10M_AVG',
+                'TA_PT1M_AVG','fcdate','Q2M','CCLOW','obs_elevation','RHero','WSero','Tero','RH0bias',
                 'WS0bias','T0bias','RH1bias','WS1bias','T1bias']
 	
         if 'T_weight' in data.columns:
@@ -47,7 +47,7 @@ def modify(data,param):
         if 'RH_weight' in data.columns:
                 data = data.drop('RH_weight', axis = 1)
         if 'WS_weight' in data.columns:
-                data = data-drop('WS_weight', axis = 1)
+                data = data.drop('WS_weight', axis = 1)
     	
 	# dealing with missing values. 
 	# dt this point all rows with Na values are removed 
@@ -58,9 +58,10 @@ def modify(data,param):
         data = data.assign(hour=data.validdate.dt.hour)
         data = encode(data, 'month', 12)
         data = encode(data, 'hour', 24)
-        data = data.drop(['month','hour'], axis=1)
+        #data = data.drop(['month','hour'], axis=1)
         data = data.dropna()
-        # reorder the data to be sure that the order is the same in training/prediction
+        """
+	# reorder the data to be sure that the order is the same in training/prediction
         if param == 'T2m' and 'oldB_T' in data.columns:
                 data = data[['leadtime', 'SID', 'validdate', 'T2M', 'S10M', 'RH2M',
                 'PMSL', 'Q2M', 'CCLOW', 'obs_lat', 'obs_lon',
@@ -88,8 +89,8 @@ def modify(data,param):
         elif param == 'WG':
                 data = data[['leadtime', 'SID', 'validdate', 'D10M', 'T2M','S10M', 'RH2M',
                 'PMSL', 'GMAX', 'obs_lat', 'obs_lon', 
-		'WG_PT1H_MAX', 'WGero', 'ElevD', 'WG0bias','WG1bias', 'month_sin', 'month_cos','hour_sin', 'hour_cos']]
-	
+		'WG_PT10M_MAX', 'WGero', 'ElevD', 'WG0bias','WG1bias', 'month_sin', 'month_cos','hour_sin', 'hour_cos']]
+	"""
 	# modify data precision from f64 to f32
         data[data.select_dtypes(np.float64).columns] = data.select_dtypes(np.float64).astype(np.float32)
         return data
